@@ -20,7 +20,7 @@ Creates pods whose names spell out your message. View with `kubectl get pods` or
 
 ```sh
 # One-liner install
-kubectl apply -f https://raw.githubusercontent.com/robindiddams/motd-operator/main/dist/install.yaml
+kubectl apply -f https://motd.howcoldismy.beer/install.yaml
 ```
 
 ## Usage
@@ -88,7 +88,7 @@ kubectl motd --help                         # Show help
 ## API
 
 ```yaml
-apiVersion: motd.motd.dev/v1alpha1
+apiVersion: motd.howcoldismy.beer/v1alpha1
 kind: Motd
 metadata:
   name: my-message
