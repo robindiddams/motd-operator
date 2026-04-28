@@ -11,7 +11,7 @@
 #   echo "multi\nline" | kubectl motd   # Read message from stdin
 #
 # The default resource is auto-detected from existing Motd CRs.
-# If none exist, creates "motd-sample" in "default" namespace.
+# If none exist, creates "my-motd" in "default" namespace.
 # Override with -n/--namespace and --name flags.
 
 set -e
@@ -33,7 +33,7 @@ Flags:
   -h, --help              Show this help
 
 Examples:
-  kubectl motd Hello World              # Uses first existing Motd, or creates motd-sample
+  kubectl motd Hello World              # Uses first existing Motd, or creates my-motd
   kubectl motd -n my-ns "Hello World"   # Specific namespace
   echo -e "Line 1\nLine 2" | kubectl motd
 EOF
@@ -84,7 +84,7 @@ if [ -z "$NAMESPACE" ] || [ -z "$NAME" ]; then
   else
     # No existing resource, use defaults
     [ -z "$NAMESPACE" ] && NAMESPACE="default"
-    [ -z "$NAME" ] && NAME="motd-sample"
+    [ -z "$NAME" ] && NAME="my-motd"
     echo "No existing Motd found, will create motd/$NAME in $NAMESPACE"
   fi
 fi
@@ -110,7 +110,7 @@ MESSAGE=$(echo "$MESSAGE" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' '|' | sed 's/
 if ! kubectl patch motd "$NAME" -n "$NAMESPACE" --type=merge -p "{\"spec\":{\"message\":\"$MESSAGE\"}}" 2>/dev/null; then
   echo "Creating motd/$NAME in $NAMESPACE"
   kubectl apply -n "$NAMESPACE" -f - << EOF
-apiVersion: motd.motd.dev/v1alpha1
+apiVersion: motd.howcoldismy.beer/v1alpha1
 kind: Motd
 metadata:
   name: $NAME
