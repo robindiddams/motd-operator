@@ -1,4 +1,4 @@
-apiVersion: motd.motd.dev/v1alpha1
+apiVersion: motd.howcoldismy.beer/v1alpha1
 kind: Motd
 metadata:
   labels:

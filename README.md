@@ -16,7 +16,25 @@ Creates pods whose names spell out your message. View with `kubectl get pods` or
 - k9s-compatible (58 char max per pod)
 - Optional "crashloop" intensity for visual effects in k9s
 
-## Quick Start
+## Quick Install
+
+```sh
+# One-liner install
+kubectl apply -f https://raw.githubusercontent.com/robindiddams/motd-operator/main/dist/install.yaml
+```
+
+## Usage
+
+```sh
+# Install the kubectl plugin
+curl -Lo ~/.local/bin/kubectl-motd https://raw.githubusercontent.com/robindiddams/motd-operator/main/hack/kubectl-motd
+chmod +x ~/.local/bin/kubectl-motd
+
+# Set a message
+kubectl motd Hello World
+```
+
+## Running Locally (Development)
 
 ### Prerequisites
 
@@ -41,7 +59,7 @@ make run
 ```sh
 kubectl apply -f config/samples/
 # or use the kubectl plugin
-kubectl motd "Hello World"
+kubectl motd Hello World
 ```
 
 ### Uninstall
@@ -57,15 +75,14 @@ Install the `kubectl motd` plugin for easy message updates:
 
 ```sh
 # Install
-ln -s $(pwd)/hack/kubectl-motd ~/.local/bin/kubectl-motd
+curl -Lo ~/.local/bin/kubectl-motd https://raw.githubusercontent.com/robindiddams/motd-operator/main/hack/kubectl-motd
+chmod +x ~/.local/bin/kubectl-motd
 
 # Usage
-kubectl motd Hello World
-kubectl motd -n my-namespace Hello World
-echo "Multi\nline\nmessage" | kubectl motd
-
-# Default resource: motd-sample in default namespace
-# Override with -n and --name flags
+kubectl motd Hello World                    # Auto-detects existing Motd
+kubectl motd -n my-namespace Hello World    # Specific namespace
+echo -e "Line 1\nLine 2" | kubectl motd     # Multi-line from stdin
+kubectl motd --help                         # Show help
 ```
 
 ## API
@@ -95,11 +112,18 @@ Messages are encoded as pod names:
 - Words stay intact across pods
 - Each pod max 58 chars (k9s display limit)
 
-## Deploy to cluster
+## Build & Deploy
 
 ```sh
-make docker-build docker-push IMG=your-registry/motd-operator:latest
-make deploy IMG=your-registry/motd-operator:latest
+# Build and push
+docker build -t ghcr.io/robindiddams/motd-operator:latest .
+docker push ghcr.io/robindiddams/motd-operator:latest
+
+# Generate install.yaml
+make build-installer IMG=ghcr.io/robindiddams/motd-operator:latest
+
+# Deploy to cluster
+kubectl apply -f dist/install.yaml
 ```
 
 ## License

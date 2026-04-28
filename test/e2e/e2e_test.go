@@ -229,7 +229,7 @@ var _ = Describe("Manager", Ordered, func() {
 			By("creating a Motd resource")
 			cmd := exec.Command("kubectl", "apply", "-n", namespace, "-f", "-")
 			cmd.Stdin = strings.NewReader(`
-apiVersion: motd.motd.dev/v1alpha1
+apiVersion: motd.howcoldismy.beer/v1alpha1
 kind: Motd
 metadata:
   name: test-message
@@ -242,7 +242,7 @@ spec:
 			By("verifying pods are created")
 			verifyPodsCreated := func(g Gomega) {
 				cmd := exec.Command("kubectl", "get", "pods", "-n", namespace,
-					"-l", "motd.motd.dev/owner=test-message",
+					"-l", "motd.howcoldismy.beer/owner=test-message",
 					"-o", "jsonpath={.items[*].metadata.name}")
 				output, err := utils.Run(cmd)
 				g.Expect(err).NotTo(HaveOccurred())

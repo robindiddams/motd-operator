@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - motd.motd.dev
+  - motd.howcoldismy.beer
   resources:
   - motds
   verbs:
@@ -29,13 +29,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - motd.motd.dev
+  - motd.howcoldismy.beer
   resources:
   - motds/finalizers
   verbs:
   - update
 - apiGroups:
-  - motd.motd.dev
+  - motd.howcoldismy.beer
   resources:
   - motds/status
   verbs:

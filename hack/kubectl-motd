@@ -10,14 +10,15 @@
 #   kubectl motd -n <namespace> <msg>    # Set message in specific namespace
 #   echo "multi\nline" | kubectl motd   # Read message from stdin
 #
-# The default resource is "motd-sample" in "default" namespace.
+# The default resource is auto-detected from existing Motd CRs.
+# If none exist, creates "motd-sample" in "default" namespace.
 # Override with -n/--namespace and --name flags.
 
 set -e
 
-# Default values
-NAMESPACE="default"
-NAME="motd-sample"
+# Default values (empty = auto-detect)
+NAMESPACE=""
+NAME=""
 
 # Help text
 show_help() {
@@ -27,13 +28,13 @@ Usage: kubectl motd [flags] <message>
 Set a message-of-the-day displayed via Kubernetes pod names.
 
 Flags:
-  -n, --namespace string   Namespace (default: default)
-  --name string           Resource name (default: motd-sample)
+  -n, --namespace string   Namespace (default: auto-detect from existing Motd)
+  --name string           Resource name (default: auto-detect from existing Motd)
   -h, --help              Show this help
 
 Examples:
-  kubectl motd Hello World
-  kubectl motd -n my-ns "Multi word message"
+  kubectl motd Hello World              # Uses first existing Motd, or creates motd-sample
+  kubectl motd -n my-ns "Hello World"   # Specific namespace
   echo -e "Line 1\nLine 2" | kubectl motd
 EOF
 }
@@ -70,6 +71,24 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${ARGS[@]}"
 
+# Auto-detect namespace/name if not specified
+if [ -z "$NAMESPACE" ] || [ -z "$NAME" ]; then
+  # Find existing Motd resources
+  FOUND=$(kubectl get motd -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}' 2>/dev/null | head -1)
+  if [ -n "$FOUND" ]; then
+    FOUND_NS=$(echo "$FOUND" | cut -d'/' -f1)
+    FOUND_NAME=$(echo "$FOUND" | cut -d'/' -f2)
+    [ -z "$NAMESPACE" ] && NAMESPACE="$FOUND_NS"
+    [ -z "$NAME" ] && NAME="$FOUND_NAME"
+    echo "Using motd/$NAME in $NAMESPACE"
+  else
+    # No existing resource, use defaults
+    [ -z "$NAMESPACE" ] && NAMESPACE="default"
+    [ -z "$NAME" ] && NAME="motd-sample"
+    echo "No existing Motd found, will create motd/$NAME in $NAMESPACE"
+  fi
+fi
+
 # Read message from args or stdin
 if [ $# -gt 0 ]; then
   MESSAGE="$*"
@@ -84,8 +103,18 @@ if [ -z "$MESSAGE" ]; then
   exit 1
 fi
 
-# Escape for JSON
+# Escape for JSON (handle quotes, backslashes, newlines)
 MESSAGE=$(echo "$MESSAGE" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
 
-# Apply the patch
-kubectl patch motd "$NAME" -n "$NAMESPACE" --type=merge -p "{\"spec\":{\"message\":\"$MESSAGE\"}}"
+# Try to patch existing resource, create if it doesn't exist
+if ! kubectl patch motd "$NAME" -n "$NAMESPACE" --type=merge -p "{\"spec\":{\"message\":\"$MESSAGE\"}}" 2>/dev/null; then
+  echo "Creating motd/$NAME in $NAMESPACE"
+  kubectl apply -n "$NAMESPACE" -f - << EOF
+apiVersion: motd.motd.dev/v1alpha1
+kind: Motd
+metadata:
+  name: $NAME
+spec:
+  message: "$MESSAGE"
+EOF
+fi

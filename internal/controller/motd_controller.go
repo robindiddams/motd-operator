@@ -40,14 +40,14 @@ type MotdReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=motd.motd.dev,resources=motds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=motd.motd.dev,resources=motds/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=motd.motd.dev,resources=motds/finalizers,verbs=update
+// +kubebuilder:rbac:groups=motd.howcoldismy.beer,resources=motds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=motd.howcoldismy.beer,resources=motds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=motd.howcoldismy.beer,resources=motds/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 
 const (
 	maxPodNameLen = 58
-	labelKey      = "motd.motd.dev/owner"
+	labelKey      = "motd.howcoldismy.beer/owner"
 
 	headerPodName = "00-00-00-00-00-00-00-message-of-the-day-00-00-00-00-00-00"
 	footerPodName = "99-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00"
