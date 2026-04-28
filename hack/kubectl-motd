@@ -1,0 +1,41 @@
+#!/bin/bash
+# kubectl plugin for setting motd message
+# Usage: kubectl motd <message>
+#    or: kubectl motd -n <namespace> <message>
+#    or: echo "message" | kubectl motd
+
+# Default values
+NAMESPACE="default"
+NAME="motd-sample"
+
+# Parse kubectl-style flags first
+ARGS=()
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -n|--namespace)
+      NAMESPACE="$2"
+      shift 2
+      ;;
+    --namespace=*)
+      NAMESPACE="${1#*=}"
+      shift
+      ;;
+    *)
+      ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- "${ARGS[@]}"
+
+# Read message from args or stdin
+if [ $# -gt 0 ]; then
+  MESSAGE="$*"
+else
+  MESSAGE=$(cat)
+fi
+
+# Escape for JSON (handle quotes, backslashes, newlines)
+MESSAGE=$(echo "$MESSAGE" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
+
+kubectl patch motd "$NAME" -n "$NAMESPACE" --type=merge -p "{\"spec\":{\"message\":\"$MESSAGE\"}}"

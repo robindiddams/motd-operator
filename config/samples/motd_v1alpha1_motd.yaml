@@ -1,0 +1,10 @@
+apiVersion: motd.motd.dev/v1alpha1
+kind: Motd
+metadata:
+  labels:
+    app.kubernetes.io/name: motd-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: motd-sample
+spec:
+  message: "Hello World"
+  # intensity: "crashloop"  # uncomment to make pods crash (shows red in k9s)
