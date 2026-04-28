@@ -1,23 +1,65 @@
 #!/bin/bash
-# kubectl plugin for setting motd message
-# Usage: kubectl motd <message>
-#    or: kubectl motd -n <namespace> <message>
-#    or: echo "message" | kubectl motd
+# kubectl motd - Set a message-of-the-day via pod names
+#
+# Installation:
+#   ln -s /path/to/motd-operator/hack/kubectl-motd ~/.local/bin/kubectl-motd
+#   # or anywhere in your PATH
+#
+# Usage:
+#   kubectl motd <message>              # Set message on default resource
+#   kubectl motd -n <namespace> <msg>    # Set message in specific namespace
+#   echo "multi\nline" | kubectl motd   # Read message from stdin
+#
+# The default resource is "motd-sample" in "default" namespace.
+# Override with -n/--namespace and --name flags.
+
+set -e
 
 # Default values
 NAMESPACE="default"
 NAME="motd-sample"
 
-# Parse kubectl-style flags first
+# Help text
+show_help() {
+  cat << EOF
+Usage: kubectl motd [flags] <message>
+
+Set a message-of-the-day displayed via Kubernetes pod names.
+
+Flags:
+  -n, --namespace string   Namespace (default: default)
+  --name string           Resource name (default: motd-sample)
+  -h, --help              Show this help
+
+Examples:
+  kubectl motd Hello World
+  kubectl motd -n my-ns "Multi word message"
+  echo -e "Line 1\nLine 2" | kubectl motd
+EOF
+}
+
+# Parse flags
 ARGS=()
 while [[ $# -gt 0 ]]; do
   case $1 in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
     -n|--namespace)
       NAMESPACE="$2"
       shift 2
       ;;
     --namespace=*)
       NAMESPACE="${1#*=}"
+      shift
+      ;;
+    --name)
+      NAME="$2"
+      shift 2
+      ;;
+    --name=*)
+      NAME="${1#*=}"
       shift
       ;;
     *)
@@ -32,10 +74,18 @@ set -- "${ARGS[@]}"
 if [ $# -gt 0 ]; then
   MESSAGE="$*"
 else
+  # Read from stdin (for piping)
   MESSAGE=$(cat)
 fi
 
-# Escape for JSON (handle quotes, backslashes, newlines)
+# Exit if empty message
+if [ -z "$MESSAGE" ]; then
+  echo "Error: No message provided"
+  exit 1
+fi
+
+# Escape for JSON
 MESSAGE=$(echo "$MESSAGE" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' '|' | sed 's/|/\\n/g')
 
+# Apply the patch
 kubectl patch motd "$NAME" -n "$NAMESPACE" --type=merge -p "{\"spec\":{\"message\":\"$MESSAGE\"}}"
