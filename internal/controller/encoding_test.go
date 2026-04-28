@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+const expectedHello = "01-hello"
+
+func isAlphanumeric(c byte) bool {
+	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z')
+}
+
 func TestSanitize(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -51,8 +57,8 @@ func TestEncodeMessage_SingleWord(t *testing.T) {
 		t.Errorf("first pod should be header, got %q", result[0])
 	}
 
-	if result[1] != "01-hello" {
-		t.Errorf("second pod should be '01-hello', got %q", result[1])
+	if result[1] != expectedHello {
+		t.Errorf("second pod should be %q, got %q", expectedHello, result[1])
 	}
 
 	if result[2] != footerPodName {
@@ -79,8 +85,8 @@ func TestEncodeMessage_MultiLine(t *testing.T) {
 		t.Errorf("expected 4 pods (header, 2 lines, footer), got %d: %v", len(result), result)
 	}
 
-	if result[1] != "01-hello" {
-		t.Errorf("line 0 should be '01-hello', got %q", result[1])
+	if result[1] != expectedHello {
+		t.Errorf("line 0 should be %q, got %q", expectedHello, result[1])
 	}
 
 	if result[2] != "02-world" {
@@ -95,8 +101,8 @@ func TestEncodeMessage_EscapedNewlines(t *testing.T) {
 		t.Errorf("expected 4 pods, got %d", len(result))
 	}
 
-	if result[1] != "01-hello" {
-		t.Errorf("line 0 should be '01-hello', got %q", result[1])
+	if result[1] != expectedHello {
+		t.Errorf("line 0 should be %q, got %q", expectedHello, result[1])
 	}
 
 	if result[2] != "02-world" {
@@ -189,11 +195,11 @@ func TestEncodeMessage_PodNamesAreValidDNS(t *testing.T) {
 			first := podName[0]
 			last := podName[len(podName)-1]
 
-			if !((first >= '0' && first <= '9') || (first >= 'a' && first <= 'z')) {
+			if !isAlphanumeric(first) {
 				t.Errorf("pod %d starts with invalid char: %q", i, podName)
 			}
 
-			if !((last >= '0' && last <= '9') || (last >= 'a' && last <= 'z')) {
+			if !isAlphanumeric(last) {
 				t.Errorf("pod %d ends with invalid char: %q", i, podName)
 			}
 		}
