@@ -11,7 +11,7 @@
 #   echo "multi\nline" | kubectl motd   # Read message from stdin
 #
 # The default resource is auto-detected from existing Motd CRs.
-# If none exist, creates "my-motd" in "default" namespace.
+# If none exist, creates "my-motd" in the current kubectl namespace.
 # Override with -n/--namespace and --name flags.
 
 set -e
@@ -28,7 +28,7 @@ Usage: kubectl motd [flags] <message>
 Set a message-of-the-day displayed via Kubernetes pod names.
 
 Flags:
-  -n, --namespace string   Namespace (default: auto-detect from existing Motd)
+  -n, --namespace string   Namespace (default: current kubectl namespace)
   --name string           Resource name (default: auto-detect from existing Motd)
   -h, --help              Show this help
 
@@ -82,7 +82,8 @@ if [ -z "$NAMESPACE" ] || [ -z "$NAME" ]; then
     [ -z "$NAME" ] && NAME="$FOUND_NAME"
     echo "Using motd/$NAME in $NAMESPACE"
   else
-    # No existing resource, use defaults
+    # No existing resource, use current context namespace or default
+    [ -z "$NAMESPACE" ] && NAMESPACE=$(kubectl config view --minify -o jsonpath='{.contexts[].context.namespace}')
     [ -z "$NAMESPACE" ] && NAMESPACE="default"
     [ -z "$NAME" ] && NAME="my-motd"
     echo "No existing Motd found, will create motd/$NAME in $NAMESPACE"
